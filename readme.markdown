@@ -16,7 +16,7 @@ Features:
 
 + built-in timer to devalidate answers that where too fast for a human
 
-Version: 0.2
+Version: 0.2.2
 
 ## Installation ##
 
@@ -48,10 +48,6 @@ Available settings with their defaults are:
 
 + `'timer' => 0` - Sets the seconds after which a correct answer becomes valid.
 Generally automated bots will submit forms a lot faster than a human ever could.
-
-+ `'autoload' => false` - Setting this to true will cause a captcha to be generated
-as soon as the component is instanciated. Generally this isn't necessary anymore
-since the last changes and is therefore deprecated.
 
 + `'godmode' => false` - This feature allows you to pass any captcha by answering "42".
 This is useful for the development phase when you do manual testing.

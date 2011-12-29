@@ -15,7 +15,7 @@
 * + built-in timer to devalidate answers that where too fast for a human
 *
 * @author Konstantin Koss
-* @version 0.2
+* @version 0.2.2
 * @copyright Copyright 2011, Konstantin Koss
 * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 * @package app.Controller.Component
@@ -178,15 +178,12 @@ class MathCaptchaComponent extends Component {
   * @var array
   */
   private $__defaults = array(
-    'autoload' => false,
     'timer' => 0,
     'godmode' => false
   );
 
   /**
   * Constructor method.
-  *
-  * Set 'autoload' to true to start automatic captcha generation.
   *
   * Set a 'timer' in seconds to allow correct captchas only after a
   * certain amount of time, for example ['timer' => 3] for 3 seconds. (This
@@ -204,7 +201,6 @@ class MathCaptchaComponent extends Component {
   public function __construct($collection, $settings = array()) {
     parent::__construct($collection, $settings);
     $this->settings = array_merge($this->__defaults, $settings);
-    if ($this->settings['autoload']) $this->makeCaptcha();
   } 
 
   /**
@@ -416,5 +412,4 @@ class MathCaptchaComponent extends Component {
     return $validated;
   }
 }
-
-?> 
+?>
