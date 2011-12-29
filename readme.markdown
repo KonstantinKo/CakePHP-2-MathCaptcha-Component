@@ -38,10 +38,11 @@ validation, so if the user typed "one" instead of "1" the answer will also be co
 
 Finally you can also set some options when instantiating the component.
 Do this by giving extra parameters in the $components, like this:
-`public $components = array(
-	'MathCaptcha' => array(
-		'setting' => 'value',
-		'setting2' => 1));`
+
+    public $components = array(
+    	'MathCaptcha' => array(
+    		'setting' => 'value',
+    		'setting2' => 1));
 
 Available settings with their defaults are:
 
@@ -60,27 +61,31 @@ For more advanced options please check the documentation inside the source code.
 
 ## Example ##
 
-`class UsersController extends AppController
-{
-	public $name = 'Users';
-	public $components = array('MathCaptcha', array('timer' => 3));
+In the controller:
 
-	public function add() {
-		$this->set('captcha', $this->MathCaptcha->getCaptcha());
+    class UsersController extends AppController
+    {
+    	public $name = 'Users';
+    	public $components = array('MathCaptcha', array('timer' => 3));
 
-    if ($this->request->is('post')) {
-      $this->User->create();
-      if ($this->MathCaptcha->validate($this->request->data['User']['captcha'])) {
-        $this->User->save($this->request->data);
-      } else {
-        $this->Session->setFlash('The result of the calculation was incorrect. Please, try again.');
+    	public function add() {
+    		$this->set('captcha', $this->MathCaptcha->getCaptcha());
+
+        if ($this->request->is('post')) {
+          $this->User->create();
+          if ($this->MathCaptcha->validate($this->request->data['User']['captcha'])) {
+            $this->User->save($this->request->data);
+          } else {
+            $this->Session->setFlash('The result of the calculation was incorrect. Please, try again.');
+          }
+        } 
       }
-    } 
-  }
-}`
+    }
 
-`// in the View - Users/add.ctp
- echo $this->Form->create('User');
- # ...
- echo $this->Form->input('captcha', array('label' => 'Calculate this: '.$captcha));
- echo $this->Form->end('Submit');`
+And in the View:
+
+    // Users/add.ctp
+    echo $this->Form->create('User');
+    # ...
+    echo $this->Form->input('captcha', array('label' => 'Calculate this: '.$captcha));
+    echo $this->Form->end('Submit');
