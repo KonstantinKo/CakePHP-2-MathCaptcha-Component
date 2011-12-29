@@ -52,10 +52,18 @@ Generally automated bots will submit forms a lot faster than a human ever could.
 + `'godmode' => false` - This feature allows you to pass any captcha by answering "42".
 This is useful for the development phase when you do manual testing.
 
-For more advanced options please check the documentation inside the source code.
++ `'tabsafe' => false` - At the cost of a little convenience you can make this
+component abandon it's session-based approach to result validation as that approach
+runs the risk of breaking due to a user opening multiple tabs at once on your website.
+Instead you get a hash-digested version of the result and attach that as a hidden
+field to your form. More information further below.
+
+*For more advanced options please check the documentation inside the source code.*
 
 
-## Example ##
+## Examples ##
+
+### Session Based ###
 
 In the controller:
 
@@ -83,5 +91,44 @@ And in the View:
     // Users/add.ctp
     echo $this->Form->create('User');
     # ...
+    echo $this->Form->input('captcha', array('label' => 'Calculate this: '.$captcha));
+    echo $this->Form->end('Submit');
+
+### Tabsafe ###
+
+In the controller:
+
+    class UsersController extends AppController
+    {
+      public $name = 'Users';
+      public $components = array('MathCaptcha', array(
+          'timer' => 3,
+          'tabsafe' => true
+      ));
+
+      public function add() {
+        $this->set('captcha', $this->MathCaptcha->getCaptcha());
+        $this->set('captcha_result', $this->MathCaptcha->getResult());
+
+        if ($this->request->is('post')) {
+          $this->User->create();
+          if ($this->MathCaptcha->validate(
+            array($this->request->data['User']['captcha'],
+                  $this->request->data['User']['result'])
+          )) {
+            $this->User->save($this->request->data);
+          } else {
+            $this->Session->setFlash('The result of the calculation was incorrect. Please, try again.');
+          }
+        } 
+      }
+    }
+
+And in the View:
+
+    // Users/add.ctp
+    echo $this->Form->create('User');
+    # ...
+    echo $this->Form->hidden('result', array('value' => $captcha_result));
     echo $this->Form->input('captcha', array('label' => 'Calculate this: '.$captcha));
     echo $this->Form->end('Submit');

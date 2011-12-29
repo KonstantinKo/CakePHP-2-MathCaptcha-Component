@@ -179,7 +179,8 @@ class MathCaptchaComponent extends Component {
   */
   private $__defaults = array(
     'timer' => 0,
-    'godmode' => false
+    'godmode' => false,
+    'tabsafe' => false
   );
 
   /**
@@ -192,6 +193,12 @@ class MathCaptchaComponent extends Component {
   *
   * Setting 'godmode' to true is useful for development and will enable you to
   * pass all captcha validations by typing "42" into the captcha input.
+  *
+  * If 'tabsafe' is set to true this component won't use session-based validation.
+  * This means a little more work for you as you will have to call getResult()
+  * in your controller, put the md5-digested answer in a hidden field on your form,
+  * and call validate() with the first param being an array containing the
+  * user's answer and the correct answer from your hidden field.
   *
   * @access public
   * @param ComponentCollection $collection
@@ -231,7 +238,7 @@ class MathCaptchaComponent extends Component {
     $question = $this->choices[mt_rand(0, count($this->choices)-1)];
     $this->convertPlaceholders($question);
 
-    if ($autoRegister) $this->registerAnswer();
+    if ($autoRegister && !$this->settings['tabsafe']) $this->registerAnswer();
 
     return $this->question;
   }
@@ -324,7 +331,10 @@ class MathCaptchaComponent extends Component {
         $result = $this->firstnum / $this->secondnum;
     }
 
-    return $result;
+    if ($this->settings['tabsafe'])
+      return md5($result);
+    else
+      return $result;
   }
 
   /**
@@ -382,20 +392,31 @@ class MathCaptchaComponent extends Component {
   * the user typed in the number as a word.
   *
   * @access public
-  * @param integer|string $data The data that gets validated.
+  * @param mixed $data The data that gets validated. When using tabsafe, give an array
+  *   with [$user_answer, $resulthash]. Otherwise just the user's answer as integer or string.
   * @param bool $loose Whether or not to allow corresponding words as correct answers.
   * @param bool $autoUnset Automatically removes the Session vars if the validation ends up true.
   * @return bool
   */
   public function validate($data, $loose = true, $autoUnset = true) {
-    if ($this->settings['godmode'] && $data == 42) return true;
+    if (is_array($data)) 
+      $answer = $data[0];
+    else
+      $answer = $data;
+
+    if ($this->settings['godmode'] && $answer == 42)
+      return true;
 
     if ($this->settings['timer']) {
       if (($this->Session->read('MathCaptcha.time') + $this->settings['timer']) > time())
         return false;
     }
 
-    $result = $this->Session->read('MathCaptcha.result');
+    if ($this->settings['tabsafe'])
+      return $this->validateTabsafe($data, $loose, $autoUnset);
+    else
+      $result = $this->Session->read('MathCaptcha.result');
+
     $validated = ($data == $result);
 
     if ($loose && !$validated) {
@@ -408,7 +429,36 @@ class MathCaptchaComponent extends Component {
       }
     }
 
-    if ($validated) $this->unsetAnswer();
+    if ($validated && $autoUnset) $this->unsetAnswer();
+    return $validated;
+  }
+
+  /**
+  * Tabsafe MathCaptcha Validation
+  *
+  * @ignore
+  */
+  private function validateTabsafe($data, $loose, $autoUnset) {
+    $result = $data[1];
+    $data = $data[0];
+
+    $validated = (md5($data) == $result);
+
+    if ($loose && !$validated) {
+      foreach ($this->alternatives as $key => $value) {
+        if ($result == md5($key)) {
+          if (is_array($value)) {
+            foreach ($value as $alternative) {
+              if (strcasecmp(md5($data), md5($alternative)) == 0) $validated = true;
+            }
+          } else {
+            if (strcasecmp(md5($data), md5($value)) == 0) $validated = true;
+          }
+        }
+      }
+    }
+
+    if ($validated && $autoUnset) $this->unsetAnswer();
     return $validated;
   }
 }
